@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.teiid.logging.LogConstants;
+import org.teiid.logging.LogManager;
 import org.teiid.metadata.Column;
 import org.teiid.metadata.Column.SearchType;
 import org.teiid.metadata.MetadataFactory;
@@ -61,6 +63,7 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
         
         for (TableInfo tableInfo:tablesInfo) {
             if (shouldExclude(tableInfo)) {
+                LogManager.logDetail(LogConstants.CTX_CONNECTOR, "Excluding table based on pattern = ", tableInfo.getFullName());
                 continue;
             }
             
@@ -70,13 +73,20 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
                     continue;
                 }
                 table.setSupportsUpdate(false);
-                tables.put(table.getFullName(), table);                
+                tables.put(tableInfo.getFullName(), table);             
             }
         }
         
         // add columns
-        //addColumns(Map<String, Table> tableMap, Connection conn, MetadataFactory metadataFactory) throws SQLException {
         addColumns(tables, conn, metadataFactory);  
+        
+        // remove empty views
+        for (Table t:metadataFactory.getSchema().getTables().values()) {
+            if (t.getColumns() == null || t.getColumns().isEmpty()) {
+                LogManager.logDetail(LogConstants.CTX_CONNECTOR, "Table or view is not valid, no colums found = ", t.getName());
+                metadataFactory.addColumn("dummy", TypeFacility.RUNTIME_NAMES.STRING, t);
+            }
+        }
     }
     
     protected boolean shouldExclude(TableInfo table) {
@@ -125,21 +135,31 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
         public String getFullName() {
             return this.owner+"."+name;
         }
+        
+        @Override
+        public String toString() {
+            return getFullName();
+        }
     }
     
 	private List<TableInfo> getTables(Connection conn) throws SQLException {
-	    String SQL = 
-	            "SELECT LIBNAME AS owner,\n" + 
+	    String sql = "SELECT \n" + 
+	    		"LIBNAME AS owner,\n" + 
 	    		"MEMNAME AS name,\n" + 
+	    		"MEMTYPE AS type,\n" + 
+	    		"MEMNAME AS remarks " +
 	    		"FROM dictionary.tables AS tbl\n" + 
 	    		"WHERE ( memtype = 'DATA' OR memtype = 'VIEW')\n" + 
-	    		"AND tbl.LIBNAME EQ"+ this.schemaName + 
+	    		"AND (tbl.LIBNAME EQ '"+this.schemaName+"')\n" + 
 	    		"ORDER BY type, owner, name";
+	    
+	    LogManager.logDetail(LogConstants.CTX_CONNECTOR, sql);
+	    
 		ArrayList<TableInfo> tables = new ArrayList<TableInfo>();
 		Statement stmt = conn.createStatement();
-		ResultSet rs =  stmt.executeQuery(SQL); //$NON-NLS-1$
+		ResultSet rs =  stmt.executeQuery(sql); //$NON-NLS-1$
 		while (rs.next()){
-			tables.add(new TableInfo(rs.getString(1), rs.getString(2)));
+			tables.add(new TableInfo(rs.getString(1).trim(), rs.getString(2).trim()));
 		}
 		rs.close();
 		
@@ -147,8 +167,18 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 		return tables;
 	}
 
-	private String getRuntimeType(String type, String length) {
-		if (type.equalsIgnoreCase("num") && length.equals("8.0")) { //$NON-NLS-1$
+	private String getRuntimeType(String name, String type, String length) {
+	    
+	    if (name.toUpperCase().endsWith("_DT")) {
+	        return TypeFacility.RUNTIME_NAMES.DATE;
+	    }
+	    else if (name.toUpperCase().endsWith("DT_TM")) {
+	        return TypeFacility.RUNTIME_NAMES.TIMESTAMP;
+	    }
+	    else if (name.toUpperCase().endsWith("_TM")) {
+	        return TypeFacility.RUNTIME_NAMES.TIME;
+	    }
+	    else if (type.equalsIgnoreCase("num") && length.equals("8.0")) { //$NON-NLS-1$
 			return TypeFacility.RUNTIME_NAMES.INTEGER;
 		}
 		else if (type.equalsIgnoreCase("char")) { //$NON-NLS-1$
@@ -158,7 +188,6 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 	}
 
 	private void addColumns(Map<String, Table> tableMap, Connection conn, MetadataFactory metadataFactory) throws SQLException {
-
 	    /*
          (1)libname char(8) label='Library Name', 
          (2)memname char(32) label='Member Name', 
@@ -181,24 +210,47 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 	        }
 	    }
 	    sb.append(")");
-		
+	    
+	    String sql = sb.toString();
+	    LogManager.logDetail(LogConstants.CTX_CONNECTOR, sql);
+	    
 		Statement stmt = conn.createStatement();
-		ResultSet rs =  stmt.executeQuery(sb.toString()); //$NON-NLS-1$
+		ResultSet rs =  stmt.executeQuery(sql); //$NON-NLS-1$
 		while (rs.next()){
 		    
-		    TableInfo colTable = new TableInfo(rs.getString(1), rs.getString(2));
+		    TableInfo colTable = new TableInfo(rs.getString(1).trim(), rs.getString(2).trim());
 		    
 			String name = rs.getString(4);
 			String type = rs.getString(5);
 			String length = rs.getString(6);
 			String label = rs.getString(9);
 			
+			if (name != null) {
+			    name = name.trim();
+			}
 			if (type != null) {
 				type = type.trim(); 
 			}
-			String runtimeType = getRuntimeType(type, length);
+			if (length != null) {
+			    length = length.trim();
+			}
+			if (label != null) {
+			    label = label.trim();
+			}
+			
+            if (tableMap.get(colTable.getFullName()) == null) {
+                continue;
+            }
+			
+			String runtimeType = getRuntimeType(name, type, length);
 
-			Column column = metadataFactory.addColumn(name, runtimeType, tableMap.get(colTable.getFullName()));
+			Table table = tableMap.get(colTable.getFullName());
+			if (table.getColumnByName(name) != null) {
+			    LogManager.logDetail(LogConstants.CTX_CONNECTOR, "Column ", name, " already found in table ", table.getName());
+			    continue;
+			}
+			
+			Column column = metadataFactory.addColumn(name, runtimeType, table);
 			column.setNameInSource(name);
 			column.setLength(Double.valueOf(length).intValue());
 			column.setAnnotation(label);

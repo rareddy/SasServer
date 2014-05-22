@@ -204,8 +204,12 @@ public class SasExecutionFactory extends JDBCExecutionFactory {
 
     @Override
     public Object retrieveValue(ResultSet results, int columnIndex, Class<?> expectedType) throws SQLException {
-    	return super.retrieveValue(results, columnIndex, expectedType);
-    }
+        if (expectedType.equals(Integer.class) || expectedType.equals(Timestamp.class) || expectedType.equals(Date.class) || expectedType.equals(Time.class)) {
+            // Calendar based getTimestamp not supported by Hive
+            return results.getObject(columnIndex);
+        }
+        return super.retrieveValue(results, columnIndex, expectedType);
+    }    
     
     protected FunctionMethod addAggregatePushDownFunction(String qualifier, String name, String returnType, String...paramTypes) {
     	FunctionMethod method = addPushDownFunction(qualifier, name, returnType, paramTypes);

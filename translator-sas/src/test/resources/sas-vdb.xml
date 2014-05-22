@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<vdb name="sassy" version="1">
+    <model visible="false" type="PHYSICAL" name="spds">
+        <property name="importer.useFullSchemaName" value="false"/>
+        <property name="importer.schemaName" value="X0000001"/>
+        <property name="importer.tableNamePattern" value="TJAEIN"/>
+        <source name="qa" translator-name="sas-spds" connection-jndi-name="java:/sas-qa"/>
+    </model>
+</vdb>
