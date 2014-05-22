@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.0" name="com.sas">
+    <resources>
+      <resource-root path="sas.core.jar"/>
+      <resource-root path="sas.intrnet.javatools.jar"/>
+      <resource-root path="sas.svc.connection.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="javax.api"/>
+        <module name="javax.resource.api"/>
+    </dependencies>
+</module>
