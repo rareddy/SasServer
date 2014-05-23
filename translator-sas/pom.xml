@@ -9,18 +9,21 @@
 
     <properties>
         <jbossas-module-root>modules/system/layers/dv</jbossas-module-root>
+        <teiid.version>${env.TEIID_VERSION}</teiid.version>
     </properties>
     <dependencies>
+
         <dependency>
             <groupId>org.jboss.teiid</groupId>
             <artifactId>teiid-api</artifactId>
-            <version>8.4.1</version>
+            <version>${teiid.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.jboss.teiid</groupId>
             <artifactId>teiid-common-core</artifactId>
-            <version>8.4.1</version>
+            <version>${teiid.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -42,6 +45,7 @@
             <version>1.5</version>
             <scope>provided</scope>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -82,7 +86,7 @@
                     </goals>
                   </execution>
                 </executions>
-            </plugin>   
-        </plugins>         
+            </plugin>
+        </plugins>
     </build>
 </project>
