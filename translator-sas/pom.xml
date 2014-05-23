@@ -8,8 +8,10 @@
     <description>This translator provides access SAS SPD server</description>
 
     <properties>
-        <jbossas-module-root>modules/system/layers/dv</jbossas-module-root>
-        <teiid.version>${env.TEIID_VERSION}</teiid.version>
+      <jbossas-module-root>modules/system/layers/dv</jbossas-module-root>
+      <teiid.version>${env.TEIID_VERSION}</teiid.version>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <sas.version>903000.2.0.20110601190000_v930</sas.version>
     </properties>
     <dependencies>
 
@@ -57,6 +59,26 @@
             <version>1.5</version>
             <scope>provided</scope>
         </dependency>
+
+
+		<dependency>
+		  <groupId>com.sas</groupId>
+		  <artifactId>sas-core</artifactId>
+		  <version>${sas.version}</version>
+		</dependency>
+
+		<dependency>
+		  <groupId>com.sas</groupId>
+		  <artifactId>sas-intrnet-javatools</artifactId>
+		  <version>${sas.version}</version>
+		</dependency>
+
+		<dependency>
+		  <groupId>com.sas</groupId>
+		  <artifactId>sas-svc-connection</artifactId>
+		  <version>${sas.version}</version>
+		</dependency>
+
 
     </dependencies>
 
