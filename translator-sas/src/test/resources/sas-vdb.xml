@@ -3,7 +3,7 @@
     <model visible="false" type="PHYSICAL" name="spds">
         <property name="importer.useFullSchemaName" value="false"/>
         <property name="importer.schemaName" value="X0000001"/>
-        <property name="importer.tableNamePattern" value="TJAEIN"/>
-        <source name="qa" translator-name="sas-spds" connection-jndi-name="java:/sas-qa"/>
+        <property name="importer.includeTablePattern" value="PL0613_TJASELU_CTRL"/>
+        <source name="qa" translator-name="sas-spds" connection-jndi-name="java:/sas-qa-pl"/>
     </model>
 </vdb>

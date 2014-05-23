@@ -43,9 +43,13 @@ import org.teiid.translator.jdbc.JDBCMetdataProcessor;
 
 @SuppressWarnings("nls")
 public class SasMetadataProcessor extends JDBCMetdataProcessor {
-    private Pattern tableNamePattern;
-    private Pattern excludeTables;
-    private String schemaName = "X0000001";
+    private Pattern includeTablePattern;
+    private Pattern excludeTablePattern;
+    private String schemaName;
+    
+    public SasMetadataProcessor() {
+        setUseFullSchemaName(false);
+    }
     
 	public void process(MetadataFactory metadataFactory, Connection conn)	throws TranslatorException {
 		try {
@@ -56,8 +60,7 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 	}
     
     @Override
-    public void getConnectorMetadata(Connection conn, MetadataFactory metadataFactory)
-            throws SQLException {
+    public void getConnectorMetadata(Connection conn, MetadataFactory metadataFactory) throws SQLException {
         List<TableInfo> tablesInfo = getTables(conn);
         Map<String, Table> tables = new HashMap<String, Table>();
         
@@ -90,25 +93,26 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
     }
     
     protected boolean shouldExclude(TableInfo table) {
-        return excludeTables != null && excludeTables.matcher(table.getName()).matches();
+        if (this.excludeTablePattern != null) {
+            return this.excludeTablePattern.matcher(table.getName()).matches();
+        }
+        return false;
     }
     
     protected boolean shouldInclude(TableInfo table) {
-        if (this.tableNamePattern != null) {
-            return this.tableNamePattern.matcher(table.getName()).matches();
+        if (this.includeTablePattern != null) {
+            return this.includeTablePattern.matcher(table.getName()).matches();
         }
         return true;
     }    
     
-    @Override
-    public void setExcludeTables(String excludeTables) {
-        this.excludeTables = Pattern.compile(excludeTables, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+    public void setExcludeTablePattern(String excludeTables) {
+        this.excludeTablePattern = Pattern.compile(excludeTables, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
         super.setExcludeTables(excludeTables);
     }
     
-    @Override
-    public void setTableNamePattern(String tableNamePattern) {
-        this.tableNamePattern = Pattern.compile(tableNamePattern, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);;
+    public void setIncludeTablePattern(String tableNamePattern) {
+        this.includeTablePattern = Pattern.compile(tableNamePattern, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);;
         super.setTableNamePattern(tableNamePattern);
     }
     
@@ -129,9 +133,11 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
         public String getOwner() {
             return owner;
         }   
+        
         public String getName() {
             return name;
-        }        
+        }  
+        
         public String getFullName() {
             return this.owner+"."+name;
         }
@@ -149,9 +155,14 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 	    		"MEMTYPE AS type,\n" + 
 	    		"MEMNAME AS remarks " +
 	    		"FROM dictionary.tables AS tbl\n" + 
-	    		"WHERE ( memtype = 'DATA' OR memtype = 'VIEW')\n" + 
-	    		"AND (tbl.LIBNAME EQ '"+this.schemaName+"')\n" + 
-	    		"ORDER BY type, owner, name";
+	    		"WHERE ( memtype = 'DATA' OR memtype = 'VIEW')\n";
+	    		if (schemaName != null) {
+	    		    sql = sql+"AND (tbl.LIBNAME EQ '"+this.schemaName+"')\n";
+	    		}
+	    		else {
+	    		    sql = sql+"AND (tbl.LIBNAME NE 'MAPS' AND tbl.LIBNAME NE 'SASUSER' AND tbl.LIBNAME NE 'SASHELP')\n"; 
+	    		}
+	    		sql = sql+"ORDER BY type, owner, name";
 	    
 	    LogManager.logDetail(LogConstants.CTX_CONNECTOR, sql);
 	    
@@ -162,12 +173,10 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 			tables.add(new TableInfo(rs.getString(1).trim(), rs.getString(2).trim()));
 		}
 		rs.close();
-		
-		
 		return tables;
 	}
 
-	private String getRuntimeType(String name, String type, String length) {
+	protected String getRuntimeType(String name, String type, String length) {
 	    
 	    if (name.toUpperCase().endsWith("_DT")) {
 	        return TypeFacility.RUNTIME_NAMES.DATE;
@@ -188,6 +197,9 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
 	}
 
 	private void addColumns(Map<String, Table> tableMap, Connection conn, MetadataFactory metadataFactory) throws SQLException {
+	    if(tableMap.isEmpty()) {
+	        return;
+	    }
 	    /*
          (1)libname char(8) label='Library Name', 
          (2)memname char(32) label='Member Name', 
@@ -199,9 +211,9 @@ public class SasMetadataProcessor extends JDBCMetdataProcessor {
          (8)varnum num label='Column Number in Table', 
          (9)label char(256) label='Column Label'
    		 */
+	    List<Table> tables = new ArrayList<Table>(tableMap.values());
 	    StringBuilder sb = new StringBuilder();
 	    sb.append("SELECT * FROM dictionary.columns WHERE memname IN (");
-	    List<Table> tables = new ArrayList<Table>(tableMap.values());
 	    for (int i = 0; i < tables.size(); i++) {
 	        Table t = tables.get(i);
 	        sb.append("'").append(t.getName()).append("'");

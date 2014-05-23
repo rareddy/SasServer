@@ -160,39 +160,6 @@ public class SasExecutionFactory extends JDBCExecutionFactory {
     	return false;
     }
 
-	@Override
-    public boolean hasTimeType() {
-    	return false;
-    }
-
-    @Override
-    public String translateLiteralBoolean(Boolean booleanValue) {
-        if(booleanValue.booleanValue()) {
-            return "true"; //$NON-NLS-1$
-        }
-        return "false"; //$NON-NLS-1$
-    }
-
-    @Override
-    public String translateLiteralDate(java.sql.Date dateValue) {
-        return '\'' + formatDateValue(dateValue) + '\'';
-    }
-
-    @Override
-    public String translateLiteralTime(Time timeValue) {
-    	if (!hasTimeType()) {
-    		return translateLiteralTimestamp(new Timestamp(timeValue.getTime()));
-    	}
-    	//(DT_WSTR,10)((DT_STR,4,1252)YEAR(Mail_Pce_Dt) + "-" + RIGHT("00" + (DT_STR,2,1252)MONTH(Mail_Pce_Dt),2) + "-" + RIGHT("00" + (DT_STR,2,1252)DAY(Mail_Pce_Dt),2))    	
-    	return '\'' + formatDateValue(timeValue) + '\'';
-    }
-
-    @Override
-    public String translateLiteralTimestamp(Timestamp timestampValue) {
-        return '\'' + formatDateValue(timestampValue) + '\'';
-    }
-
-
     @Override
     protected JDBCMetdataProcessor createMetadataProcessor() {
         return getMetadataProcessor();
