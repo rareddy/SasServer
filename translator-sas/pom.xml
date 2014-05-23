@@ -1,44 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <parent>
-        <artifactId>connectors</artifactId>
-        <groupId>org.jboss.teiid</groupId>
-        <version>8.4.1</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>translator-sas</artifactId>
     <groupId>org.jboss.teiid.connectors</groupId>
+    <version>1.0-SNAPSHOT</version>
     <name>SAS Translator</name>
     <description>This translator provides access SAS SPD server</description>
-    
+
     <properties>
-        <jbossas-module-root>modules/system/layers/dv</jbossas-module-root>
+      <jbossas-module-root>modules/system/layers/dv</jbossas-module-root>
+      <teiid.version>${env.TEIID_VERSION}</teiid.version>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <sas.version>903000.2.0.20110601190000_v930</sas.version>
     </properties>
     <dependencies>
+
         <dependency>
             <groupId>org.jboss.teiid</groupId>
             <artifactId>teiid-api</artifactId>
-            <version>8.4.1</version>
+            <version>${teiid.version}</version>
             <scope>provided</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>org.jboss.teiid</groupId>
+                <artifactId>teiid-metadata</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
+
+        <dependency>
+          <groupId>org.jboss.teiid.connectors</groupId>
+          <artifactId>translatorjdbc</artifactId>
+          <version>${teiid.version}</version>
+          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.jboss.teiid</groupId>
+              <artifactId>teiid-metadata</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+
         <dependency>
             <groupId>org.jboss.teiid</groupId>
             <artifactId>teiid-common-core</artifactId>
-            <version>8.4.1</version>
+            <version>${teiid.version}</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.teiid.connectors</groupId>
-            <artifactId>translator-jdbc</artifactId>
-            <version>8.4.1</version>
-            <scope>provided</scope>
-        </dependency>   
-        <dependency>
-            <groupId>org.jboss.teiid.connectors</groupId>
-            <artifactId>translator-jdbc</artifactId>      
-            <version>8.4.1</version>
-            <type>test-jar</type>
-            <scope>test</scope>
+            <exclusions>
+              <exclusion>
+                <groupId>org.jboss.teiid</groupId>
+                <artifactId>teiid-metadata</artifactId>
+              </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>javax.resource</groupId>
@@ -46,6 +59,27 @@
             <version>1.5</version>
             <scope>provided</scope>
         </dependency>
+
+
+		<dependency>
+		  <groupId>com.sas</groupId>
+		  <artifactId>sas-core</artifactId>
+		  <version>${sas.version}</version>
+		</dependency>
+
+		<dependency>
+		  <groupId>com.sas</groupId>
+		  <artifactId>sas-intrnet-javatools</artifactId>
+		  <version>${sas.version}</version>
+		</dependency>
+
+		<dependency>
+		  <groupId>com.sas</groupId>
+		  <artifactId>sas-svc-connection</artifactId>
+		  <version>${sas.version}</version>
+		</dependency>
+
+
     </dependencies>
 
     <build>
@@ -86,7 +120,7 @@
                     </goals>
                   </execution>
                 </executions>
-            </plugin>   
-        </plugins>         
+            </plugin>
+        </plugins>
     </build>
 </project>
