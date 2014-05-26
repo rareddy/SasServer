@@ -1,16 +1,29 @@
 SasServer
 =========
 
-A Translator for SAS Server
+A Translator for SAS Server to use in the JBoss Data Virtulization 6 platform. Even though SAS provides a JDBC driver, the JDBC driver does not provide metadata through DatabaseMetadata class. To full fill this gap a custom translator is needed to work with JDV6.
+
+SAS provides system tables that contain the metadata, this translator is designed such that it uses these system tables to retrieve the metadata and convert them into metadata schema in the JDV system. This translator also defines the capabilities of the source such that correct push down queries will be sent to the SAS source system (this requires further developement)
 
 
 To build run
 
 mvn clean install -Dteiid.version=8.4.1 -Dsas.version=9.2
 
-note you have to provide the SAS jar files in your local maven repository for above to work
+note you have to provide the SAS jar files in your local maven repository for above to work correctly.
 
-TODO:
+
+Install the translator in JDV 6 platorm
+
+After sucessfuly running the above build, unzip the "translator-sas/target/translator-sas-1.0-SNAPSHOT-jboss-as7-dist.zip" on the "modules" directory of JDV 6 server to install the translator JAR files. Note that you also need to copy the SAS jar files into the JDV 6. Then edit the standalone.xml file, in the "teiid" subsystem, add the following to add the translator to the configuration
+
+<translator name="sas-spds" module="org.jboss.teiid.translator.sas" />
+
+
+
+
+
+TODO: (tasks to be finished)
 1) Add Function support for 
 
  addr
