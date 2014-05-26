@@ -17,15 +17,18 @@ Install the translator in JDV 6 platorm
 
 After sucessfuly running the above build, unzip the "translator-sas/target/translator-sas-1.0-SNAPSHOT-jboss-as7-dist.zip" on the "modules" directory of JDV 6 server to install the translator JAR files. Note that you also need to copy the SAS jar files into the JDV 6. Then edit the standalone.xml file, in the "teiid" subsystem, add the following to add the translator to the configuration
 
+```
 <translator name="sas-spds" module="org.jboss.teiid.translator.sas" />
+```
 
 
 
 
+# TODO: (tasks to be finished)
 
-TODO: (tasks to be finished)
 1) Add Function support for 
 
+```
  addr
  arsin
  atan
@@ -184,7 +187,7 @@ TODO: (tasks to be finished)
  zipname
  zipnamel
  zipstate
- 
+```
  
  2) The driver seems very sensitive and does not give lot of error information
  
