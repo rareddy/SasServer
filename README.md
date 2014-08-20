@@ -1,4 +1,4 @@
-SasServer
+SAS Server
 =========
 
 A Translator for SAS Server to use in the JBoss Data Virtulization 6 platform. Even though SAS provides a JDBC driver, the JDBC driver does not provide metadata through DatabaseMetadata class. To full fill this gap a custom translator is needed to work with JDV6.
@@ -7,8 +7,9 @@ SAS provides system tables that contain the metadata, this translator is designe
 
 
 To build run
-
+```
 mvn clean install -Dteiid.version=8.4.1 -Dsas.version=9.2
+```
 
 note you have to provide the SAS jar files in your local maven repository for above to work correctly.
 
